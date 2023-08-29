@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "416910850398",
+    "firebase_url": "https://smart-home-42440-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "smart-home-42440",
+    "storage_bucket": "smart-home-42440.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:416910850398:android:749ac7d8ed7754931137cf",
+        "android_client_info": {
+          "package_name": "com.wild.smartrack"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "416910850398-5uqv6s2gd990av5n4qv0hesoop4c6hds.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSuUdz6ICLPUEavUf00czoWC6oJ1wJpbc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "416910850398-5uqv6s2gd990av5n4qv0hesoop4c6hds.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
