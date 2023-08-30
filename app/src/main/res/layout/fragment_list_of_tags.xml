@@ -2,7 +2,7 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".ui.fragments.ListOfHubs">
+    tools:context=".ui.fragments.ListOfTags">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -33,7 +33,7 @@
 
         <!-- RecyclerView for displaying the list of hubs -->
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/controllersRecyclerView"
+            android:id="@+id/tagsRecyclerView"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:padding="16dp"

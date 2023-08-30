@@ -1,27 +1,32 @@
 package com.wild.smartrack.ui.fragments
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import com.wild.smartrack.R
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.wild.smartrack.data.Controller
 import com.wild.smartrack.databinding.FragmentListOfControllersBinding
-import com.wild.smartrack.viewmodels.ListOfControllersViewModel
+import com.wild.smartrack.viewmodels.ListOfHubsViewModel
 import dagger.hilt.android.AndroidEntryPoint
-
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class ListOfControllers : Fragment() {
 
     private var _binding: FragmentListOfControllersBinding? = null
     private val binding get() = _binding!!
-    private val listOfControllersViewModel: ListOfControllersViewModel by viewModels()
+
+    //Shared one
+    private val listOfHubsViewModel: ListOfHubsViewModel by activityViewModels()
+    private lateinit var adapter: MyControllerAdapter
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -30,4 +35,80 @@ class ListOfControllers : Fragment() {
         return binding.root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // Initialize RecyclerView
+        // Initialize RecyclerView
+        adapter = MyControllerAdapter { selectedController ->
+            listOfHubsViewModel.selectController(selectedController)
+        }
+        binding.controllersRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        binding.controllersRecyclerView.adapter = adapter
+
+        // Observe the controllers StateFlow
+        viewLifecycleOwner.lifecycleScope.launch {
+            listOfHubsViewModel.controllers.collect { controllers ->
+                Log.d("ListOfControllers", "Controllers: $controllers")
+                adapter.submitList(controllers)
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            listOfHubsViewModel.areTagsFetched.collect { areFetched ->
+                if (areFetched) {
+                    val action = ListOfControllersDirections.actionListOfControllersToListOfTags()
+                    findNavController().navigate(action)
+                }
+            }
+        }
+    }
+
+    class MyControllerAdapter(private val onClick: (Controller) -> Unit) : androidx.recyclerview.widget.RecyclerView.Adapter<MyControllerViewHolder>() {
+        private var controllers: List<Controller> = emptyList()
+
+        fun submitList(controllers: List<Controller>) {
+            this.controllers = controllers
+            notifyDataSetChanged()
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyControllerViewHolder {
+            val itemView = LayoutInflater.from(parent.context).inflate(
+                parent.context.resources.getIdentifier(
+                    "controller_item",
+                    "layout",
+                    parent.context.packageName
+                ), parent, false
+            )
+            return MyControllerViewHolder(itemView)
+        }
+
+        override fun onBindViewHolder(holder: MyControllerViewHolder, position: Int) {
+            val controller = controllers[position]
+            holder.bind(controller)
+            holder.itemView.setOnClickListener {
+                onClick(controller)
+            }
+        }
+
+        override fun getItemCount() = controllers.size
+    }
+
+    class MyControllerViewHolder(itemView: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {
+        fun bind(controller: Controller) {
+            val nameTextView: android.widget.TextView = itemView.findViewById(
+                itemView.resources.getIdentifier(
+                    "controllerName",
+                    "id",
+                    itemView.context.packageName
+                )
+            )
+            nameTextView.text = controller.name
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        _binding = null
+    }
 }

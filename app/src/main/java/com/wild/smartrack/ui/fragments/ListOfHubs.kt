@@ -6,8 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.wild.smartrack.data.Hub
@@ -19,7 +21,9 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class ListOfHubs : Fragment() {
-    private val listOfHubsViewModel: ListOfHubsViewModel by viewModels()
+    //Shared one
+    private val listOfHubsViewModel: ListOfHubsViewModel by activityViewModels()
+
     private var _binding: FragmentListOfHubsBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: MyHubAdapter
@@ -36,7 +40,10 @@ class ListOfHubs : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // Initialize RecyclerView
-        adapter = MyHubAdapter()
+        adapter = MyHubAdapter { selectedHub ->
+            listOfHubsViewModel.selectHub(selectedHub)
+
+        }
         binding.hubsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.hubsRecyclerView.adapter = adapter
 
@@ -46,9 +53,20 @@ class ListOfHubs : Fragment() {
                 adapter.submitList(hubs)
             }
         }
-    }
 
-    class MyHubAdapter : RecyclerView.Adapter<MyHubViewHolder>() {
+        // Observe the flag to see if controllers are fetched
+        viewLifecycleOwner.lifecycleScope.launch {
+            listOfHubsViewModel.areControllersFetched.collect { areFetched ->
+                if (areFetched) {
+                    // Reset the flag in ViewModel if needed
+                    // Navigate to ListOfControllers
+                    val action = ListOfHubsDirections.actionListOfHubsToListOfControllers()
+                    findNavController().navigate(action)
+                }
+            }
+        }
+    }
+    class MyHubAdapter(private val onHubClick: (Hub) -> Unit) : RecyclerView.Adapter<MyHubViewHolder>() {
         private var hubs: List<Hub> = emptyList()
 
         fun submitList(hubs: List<Hub>) {
@@ -68,7 +86,12 @@ class ListOfHubs : Fragment() {
         }
 
         override fun onBindViewHolder(holder: MyHubViewHolder, position: Int) {
-            holder.bind(hubs[position])
+            val hub = hubs[position]
+            holder.bind(hub)
+            holder.itemView.setOnClickListener {
+                onHubClick(hub)
+
+            }
         }
 
         override fun getItemCount() = hubs.size

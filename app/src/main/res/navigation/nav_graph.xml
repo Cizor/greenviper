@@ -19,5 +19,24 @@
         android:id="@+id/listOfHubs"
         android:name="com.wild.smartrack.ui.fragments.ListOfHubs"
         android:label="fragment_list_of_hubs"
-        tools:layout="@layout/fragment_list_of_hubs" />
+        tools:layout="@layout/fragment_list_of_hubs" >
+        <action
+            android:id="@+id/action_listOfHubs_to_listOfControllers"
+            app:destination="@id/listOfControllers" >
+        </action>
+    </fragment>
+    <fragment
+        android:id="@+id/listOfControllers"
+        android:name="com.wild.smartrack.ui.fragments.ListOfControllers"
+        android:label="fragment_list_of_controllers"
+        tools:layout="@layout/fragment_list_of_controllers" >
+        <action
+            android:id="@+id/action_listOfControllers_to_listOfTags"
+            app:destination="@id/listOfTags" />
+    </fragment>
+    <fragment
+        android:id="@+id/listOfTags"
+        android:name="com.wild.smartrack.ui.fragments.ListOfTags"
+        android:label="fragment_list_of_tags"
+        tools:layout="@layout/fragment_list_of_tags" />
 </navigation>
