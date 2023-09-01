@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,7 +15,6 @@ import com.wild.smartrack.data.Hub
 import com.wild.smartrack.databinding.FragmentListOfHubsBinding
 import com.wild.smartrack.viewmodels.ListOfHubsViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -27,6 +25,7 @@ class ListOfHubs : Fragment() {
     private var _binding: FragmentListOfHubsBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: MyHubAdapter
+    private val hubs = mutableListOf<Hub>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -42,26 +41,19 @@ class ListOfHubs : Fragment() {
         // Initialize RecyclerView
         adapter = MyHubAdapter { selectedHub ->
             listOfHubsViewModel.selectHub(selectedHub)
-
+            val action = ListOfHubsDirections.actionListOfHubsToListOfControllers()
+            findNavController().navigate(action)
         }
         binding.hubsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.hubsRecyclerView.adapter = adapter
 
         // Observe the hubs StateFlow
         viewLifecycleOwner.lifecycleScope.launch {
-            listOfHubsViewModel.hubs.collect { hubs ->
-                adapter.submitList(hubs)
-            }
-        }
-
-        // Observe the flag to see if controllers are fetched
-        viewLifecycleOwner.lifecycleScope.launch {
-            listOfHubsViewModel.areControllersFetched.collect { areFetched ->
-                if (areFetched) {
-                    // Reset the flag in ViewModel if needed
-                    // Navigate to ListOfControllers
-                    val action = ListOfHubsDirections.actionListOfHubsToListOfControllers()
-                    findNavController().navigate(action)
+            listOfHubsViewModel.hub.collect { hub ->
+                if (hub != null) {
+                    // Assuming `tags` is the current list of tags in the Fragment
+                    hubs.add(hub)
+                    adapter.submitList(hubs.toList()) // or however you update your list
                 }
             }
         }

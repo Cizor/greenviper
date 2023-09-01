@@ -22,28 +22,23 @@ class ListOfHubsViewModel @Inject constructor(
     private val db: FirebaseFirestore
 ) : ViewModel() {
 
-    private val _hubs = MutableStateFlow<List<Hub>>(emptyList())
-    val hubs: StateFlow<List<Hub>> = _hubs
-
-    private val _controllers = MutableStateFlow<List<Controller>>(emptyList())
-    val controllers: StateFlow<List<Controller>> = _controllers
+    private val _hub = MutableStateFlow<Hub?>(null)
+    val hub: StateFlow<Hub?> = _hub
 
     private val _selectedHub = MutableStateFlow<Hub?>(null)
     val selectedHub: StateFlow<Hub?> = _selectedHub
 
-    private val _areControllersFetched = MutableStateFlow(false)
-    val areControllersFetched: StateFlow<Boolean> = _areControllersFetched
+    private val _controller = MutableStateFlow<Controller?>(null)
+    val controller: StateFlow<Controller?> = _controller
 
     private val _selectedController = MutableStateFlow<Controller?>(null)
     val selectedController: StateFlow<Controller?> = _selectedController
 
-    private val _areTagsFetched = MutableStateFlow(false)
-    val areTagsFetched: StateFlow<Boolean> = _areTagsFetched
+    private val _tag = MutableStateFlow<Tag?>(null)  // Assuming Tag is a data class you've defined
+    val tag: StateFlow<Tag?> = _tag
 
-    private val _tags = MutableStateFlow<List<Tag>>(emptyList())  // Assuming Tag is a data class you've defined
-    val tags: StateFlow<List<Tag>> = _tags
-
-
+    private val fetchedControllers = mutableListOf<Controller>()
+    private val fetchedHubs = mutableListOf<Hub>()
 
     init {
         viewModelScope.launch {
@@ -69,6 +64,7 @@ class ListOfHubsViewModel @Inject constructor(
         _selectedHub.value = hub
     }
     fun selectController(controller: Controller) {
+        Log.d("ListOfHubsViewModel", "selectController: $controller")
         _selectedController.value = controller
     }
 
@@ -84,18 +80,16 @@ class ListOfHubsViewModel @Inject constructor(
                 fetchHubs(hubReferences)
             }
     }
-
     private fun fetchHubs(hubReferences: List<DocumentReference>) {
-        val fetchedHubs = mutableListOf<Hub>()
 
         hubReferences.forEach { hubRef ->
             hubRef.get()
                 .addOnSuccessListener { document ->
                     val hubData = document.toObject(Hub::class.java)
-                    if (hubData != null) {
+                    if (hubData != null && !fetchedHubs.contains(hubData)) {
+                        fetchedHubs.add(hubData)  // Add to fetchedHubs
                         Log.d("ListOfHubsViewModel", "fetchHubs: $hubData")
-                        fetchedHubs.add(hubData)
-                        _hubs.value = fetchedHubs
+                        _hub.value = hubData  // Emit only the new Hub
                     }
                 }
                 .addOnFailureListener {
@@ -107,18 +101,17 @@ class ListOfHubsViewModel @Inject constructor(
     private fun fetchControllers(hub: Hub) {
         Log.d("ListOfHubsViewModel", "fetchControllers: $hub")
         val controllerRefs = hub.controllers ?: emptyList()
-        val fetchedControllers = mutableListOf<Controller>()
         Log.d("ListOfHubsViewModel", "fetchControllers 0: $controllerRefs")
 
         controllerRefs.forEach { controllerRef ->
             controllerRef.get()
                 .addOnSuccessListener { document ->
                     val controllerData = document.toObject(Controller::class.java)
-                    if (controllerData != null) {
+                    if (controllerData != null && !fetchedControllers.contains(controllerData)) {
                         fetchedControllers.add(controllerData)
                         Log.d("ListOfHubsViewModel", "fetchControllers 1: $fetchedControllers")
-                        _controllers.value = fetchedControllers
-                        _areControllersFetched.value = true
+                        _controller.value = controllerData // Emit the new controller
+                        // _areControllersFetched.value = true  // No longer needed
                     }
                 }
                 .addOnFailureListener {
@@ -128,19 +121,15 @@ class ListOfHubsViewModel @Inject constructor(
     }
 
     private fun fetchTags(controller: Controller) {
-        Log.d("ListOfHubsViewModel", "fetchTags: $controller")
         val tagRefs = controller.tags ?: emptyList()  // Assuming Controller has a field "tags"
-        val fetchedTags = mutableListOf<Tag>()
 
         tagRefs.forEach { tagRef ->
             tagRef.get()
                 .addOnSuccessListener { document ->
                     val tagData = document.toObject(Tag::class.java)
                     if (tagData != null) {
-                        fetchedTags.add(tagData)
-                        Log.d("ListOfHubsViewModel", "fetchTags: $fetchedTags")
-                        _tags.value = fetchedTags
-                        _areTagsFetched.value = true
+                        Log.d("ListOfHubsViewModel", "fetchTags: $tagData")
+                        _tag.value = tagData  // emit only the new Tag
                     }
                 }
                 .addOnFailureListener {

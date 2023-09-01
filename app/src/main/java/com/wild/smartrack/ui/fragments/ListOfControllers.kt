@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -27,6 +26,8 @@ class ListOfControllers : Fragment() {
     private val listOfHubsViewModel: ListOfHubsViewModel by activityViewModels()
     private lateinit var adapter: MyControllerAdapter
 
+    private val controllers = mutableListOf<Controller>()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -39,26 +40,21 @@ class ListOfControllers : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // Initialize RecyclerView
-        // Initialize RecyclerView
         adapter = MyControllerAdapter { selectedController ->
             listOfHubsViewModel.selectController(selectedController)
+            val action = ListOfControllersDirections.actionListOfControllersToListOfTags()
+            findNavController().navigate(action)
         }
         binding.controllersRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.controllersRecyclerView.adapter = adapter
 
         // Observe the controllers StateFlow
         viewLifecycleOwner.lifecycleScope.launch {
-            listOfHubsViewModel.controllers.collect { controllers ->
+            listOfHubsViewModel.controller.collect { controller ->
                 Log.d("ListOfControllers", "Controllers: $controllers")
-                adapter.submitList(controllers)
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            listOfHubsViewModel.areTagsFetched.collect { areFetched ->
-                if (areFetched) {
-                    val action = ListOfControllersDirections.actionListOfControllersToListOfTags()
-                    findNavController().navigate(action)
+                if (controller != null) {
+                    controllers.add(controller)
+                    adapter.submitList(controllers.toList())  // or however you update your list
                 }
             }
         }
