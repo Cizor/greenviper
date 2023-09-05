@@ -38,5 +38,18 @@
         android:id="@+id/listOfTags"
         android:name="com.wild.smartrack.ui.fragments.ListOfTags"
         android:label="fragment_list_of_tags"
-        tools:layout="@layout/fragment_list_of_tags" />
+        tools:layout="@layout/fragment_list_of_tags" >
+        <action
+            android:id="@+id/action_listOfTags_to_confirmImage"
+            app:destination="@id/confirmImage" />
+    </fragment>
+    <fragment
+        android:id="@+id/confirmImage"
+        android:name="com.wild.smartrack.ui.fragments.ConfirmImage"
+        android:label="fragment_confirm_image"
+        tools:layout="@layout/fragment_confirm_image" >
+        <action
+            android:id="@+id/action_confirmImage_to_listOfTags"
+            app:destination="@id/listOfTags" />
+    </fragment>
 </navigation>
