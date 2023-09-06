@@ -1,23 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".ui.fragments.ConfirmImage">
 
+    <data>
+        <variable
+            name="viewModel"
+            type="com.wild.smartrack.viewmodels.ListOfHubsViewModel" >
+        </variable>
+    </data>
+
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-
+        <!-- Heading -->
         <TextView
-            android:id="@+id/textView"
-            android:layout_width="160dp"
-            android:layout_height="82dp"
-            android:text="Hello Confirm Image"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:id="@+id/heading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Confirm Image"
+            android:textSize="24sp"
+            android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Image -->
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="427dp"
+            android:layout_height="289dp"
+            android:layout_marginTop="24dp"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toTopOf="@+id/buttonOk"
+            app:layout_constraintDimensionRatio="H,296:128"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/heading" />
+
+        <!-- OK Button -->
+        <Button
+            android:id="@+id/buttonOk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="OK"
+            android:onClick="@{() -> viewModel.uploadImageToFirebaseStorageWrapper()}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/buttonCancel"
+            app:layout_constraintHorizontal_bias="0.5" />
+
+        <!-- Cancel Button -->
+        <Button
+            android:id="@+id/buttonCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/buttonOk"
+            app:layout_constraintHorizontal_bias="0.5" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -5,3 +5,9 @@ enum class UiState {
     SUCCESS,
     FAILURE
 }
+
+enum class UploadStatus {
+    SUCCESS,
+    FAILURE,
+    NONE // used for initial state or reset
+}

@@ -1,25 +1,37 @@
 package com.wild.smartrack.viewmodels
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.wild.smartrack.data.Controller
 import com.wild.smartrack.data.Hub
 import com.wild.smartrack.data.Tag
+import com.wild.smartrack.data.UploadStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 
 @HiltViewModel
 class ListOfHubsViewModel @Inject constructor(
     private val auth: FirebaseAuth,
-    private val db: FirebaseFirestore
+    private val db: FirebaseFirestore,
+    private val storage: FirebaseStorage
 ) : ViewModel() {
 
     private val _hub = MutableStateFlow<Hub?>(null)
@@ -39,6 +51,17 @@ class ListOfHubsViewModel @Inject constructor(
 
     private val fetchedControllers = mutableListOf<Controller>()
     private val fetchedHubs = mutableListOf<Hub>()
+
+    // MutableStateFlow
+    private val _selectedImage = MutableStateFlow<Bitmap?>(null)
+
+    // StateFlow
+    val selectedImage: StateFlow<Bitmap?> = _selectedImage
+
+    val uploadStatus = MutableStateFlow<UploadStatus>(UploadStatus.NONE)
+
+    private val storageReference = storage.reference
+
 
     init {
         viewModelScope.launch {
@@ -82,6 +105,7 @@ class ListOfHubsViewModel @Inject constructor(
     }
     private fun fetchHubs(hubReferences: List<DocumentReference>) {
 
+        fetchedHubs.clear()
         hubReferences.forEach { hubRef ->
             hubRef.get()
                 .addOnSuccessListener { document ->
@@ -99,9 +123,10 @@ class ListOfHubsViewModel @Inject constructor(
     }
 
     private fun fetchControllers(hub: Hub) {
-        Log.d("ListOfHubsViewModel", "fetchControllers: $hub")
+
+        fetchedControllers.clear()
         val controllerRefs = hub.controllers ?: emptyList()
-        Log.d("ListOfHubsViewModel", "fetchControllers 0: $controllerRefs")
+
 
         controllerRefs.forEach { controllerRef ->
             controllerRef.get()
@@ -121,6 +146,7 @@ class ListOfHubsViewModel @Inject constructor(
     }
 
     private fun fetchTags(controller: Controller) {
+
         val tagRefs = controller.tags ?: emptyList()  // Assuming Controller has a field "tags"
 
         tagRefs.forEach { tagRef ->
@@ -137,4 +163,67 @@ class ListOfHubsViewModel @Inject constructor(
                 }
         }
     }
+
+    fun convertAndScaleImage(bitmap: Bitmap) {
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 296, 128, false)
+        val bwBitmap = convertToBlackAndWhite(scaledBitmap)
+        _selectedImage.value = bwBitmap
+    }
+    private fun convertToBlackAndWhite(src: Bitmap): Bitmap {
+        val width = src.width
+        val height = src.height
+
+        val bwBitmap = Bitmap.createBitmap(width, height, src.config)
+        val canvas = Canvas(bwBitmap)
+
+        val paint = Paint()
+        val colorMatrix = ColorMatrix()
+        colorMatrix.setSaturation(0f)
+        val filter = ColorMatrixColorFilter(colorMatrix)
+        paint.colorFilter = filter
+
+        canvas.drawBitmap(src, 0f, 0f, paint)
+
+        return bwBitmap
+    }
+
+    fun uploadImageToFirebaseStorageWrapper() {
+        viewModelScope.launch {
+            uploadImageToFirebaseStorage()
+        }
+    }
+
+    suspend fun uploadImageToFirebaseStorage() {
+        val bitmap = selectedImage.value
+        val hubName = selectedHub.value?.name ?: "unknown"
+        val controllerName = selectedController.value?.name ?: "unknown"
+        val tagName = tag.value?.name ?: "unknown"
+
+        // Construct the filename
+        val fileName = "${hubName}_${controllerName}_${tagName}.jpg"
+
+        if (bitmap != null) {
+            val baos = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+            val data = baos.toByteArray()
+
+            // Use the filename in your storage reference
+            val imageRef = storageReference.child("images/$fileName")
+
+            withContext(Dispatchers.IO) {
+                try {
+                    val uploadTask = imageRef.putBytes(data).await()
+                    if (uploadTask.metadata != null) {
+                        uploadStatus.emit(UploadStatus.SUCCESS)
+                    } else {
+                        uploadStatus.emit(UploadStatus.FAILURE)
+                    }
+                } catch (e: Exception) {
+                    uploadStatus.emit(UploadStatus.FAILURE)
+                }
+            }
+        }
+    }
+
+
 }
