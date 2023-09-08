@@ -25,6 +25,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,10 +41,6 @@ class ListOfHubsViewModel @Inject constructor(
 
     private val _selectedHub = MutableStateFlow<Hub?>(null)
     val selectedHub: StateFlow<Hub?> = _selectedHub
-
-    var hubList = mutableListOf<Hub>()
-    var controllerList = mutableListOf<Controller>()
-    var tagList = mutableListOf<Tag>()
 
     private val _controller = MutableStateFlow<Controller?>(null)
     val controller: StateFlow<Controller?> = _controller
@@ -72,7 +70,6 @@ class ListOfHubsViewModel @Inject constructor(
             fetchData()
             selectedHub.collect { hub ->
                 if (hub != null) {
-                    Log.d("ListOfHubsViewModel", "selectedHub: $hub")
                     fetchControllers(hub)
                 }
             }
@@ -105,13 +102,12 @@ class ListOfHubsViewModel @Inject constructor(
             .get()
             .addOnSuccessListener { document ->
                 val hubReferences = document.get("hubs") as List<DocumentReference>? ?: return@addOnSuccessListener
-                Log.d("ListOfHubsViewModel", "fetchData: $hubReferences")
                 fetchHubs(hubReferences)
             }
     }
     private fun fetchHubs(hubReferences: List<DocumentReference>) {
 
-        fetchedHubs.clear()
+        //fetchedHubs.clear()
         hubReferences.forEach { hubRef ->
             hubRef.get()
                 .addOnSuccessListener { document ->
@@ -206,19 +202,17 @@ class ListOfHubsViewModel @Inject constructor(
         val tagName = tag.value?.name ?: "unknown"
 
         // Construct the filename
-        val fileName = "${hubName}_${controllerName}_${tagName}.jpg"
+        val fileName = "${hubName}_${controllerName}_${tagName}.bmp"
 
         if (bitmap != null) {
-            val baos = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
-            val data = baos.toByteArray()
+            val bmpData = bitmapToBMPByteArray(bitmap)  // Use the new utility function here
 
             // Use the filename in your storage reference
             val imageRef = storageReference.child("images/$fileName")
 
             withContext(Dispatchers.IO) {
                 try {
-                    val uploadTask = imageRef.putBytes(data).await()
+                    val uploadTask = imageRef.putBytes(bmpData).await()
                     if (uploadTask.metadata != null) {
                         uploadStatus.emit(UploadStatus.SUCCESS)
                     } else {
@@ -230,6 +224,51 @@ class ListOfHubsViewModel @Inject constructor(
             }
         }
     }
+
+
+    fun bitmapToBMPByteArray(bitmap: Bitmap): ByteArray {
+        val width = bitmap.width
+        val height = bitmap.height
+        val size = width * height * 3 + 54 // 54 is the size of the BMP header
+        val bytes = ByteArray(size)
+        val buffer = ByteBuffer.wrap(bytes)
+        buffer.order(ByteOrder.LITTLE_ENDIAN)
+
+        // BMP Header
+        buffer.put(0x42.toByte()) // B
+        buffer.put(0x4D.toByte()) // M
+        buffer.putInt(size) // File size
+        buffer.putInt(0) // Reserved
+        buffer.putInt(54) // Offset to pixel data
+
+        // DIB Header
+        buffer.putInt(40) // Header size
+        buffer.putInt(width)
+        buffer.putInt(height)
+        buffer.putShort(1) // Color planes
+        buffer.putShort(24) // Bits per pixel
+        buffer.putInt(0) // Compression method
+        buffer.putInt(width * height * 3) // Raw bitmap data size; no compression
+        buffer.putInt(2835) // Horizontal resolution (dpi)
+        buffer.putInt(2835) // Vertical resolution (dpi)
+        buffer.putInt(0) // Number of colors in the palette
+        buffer.putInt(0) // Number of important colors
+
+        // Bitmap data
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        for (y in height - 1 downTo 0) {
+            for (x in 0 until width) {
+                val pixel = pixels[y * width + x]
+                buffer.put((pixel and 0xFF).toByte()) // Blue
+                buffer.put((pixel shr 8 and 0xFF).toByte()) // Green
+                buffer.put((pixel shr 16 and 0xFF).toByte()) // Red
+            }
+        }
+
+        return bytes
+    }
+
 
 
 
