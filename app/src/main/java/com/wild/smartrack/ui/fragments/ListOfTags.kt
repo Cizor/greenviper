@@ -124,7 +124,7 @@ class ListOfTags : Fragment() {
                     itemView.context.packageName
                 )
             )
-            nameTextView.text = tag.name // Assuming Tag data class has a "name" property
+            "${tag.name} [${tag.count}]".also { nameTextView.text = it }
         }
     }
 

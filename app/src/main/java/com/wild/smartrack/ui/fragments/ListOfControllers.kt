@@ -100,7 +100,7 @@ class ListOfControllers : Fragment() {
                     itemView.context.packageName
                 )
             )
-            nameTextView.text = controller.name
+            "${controller.name} [${controller.tag_aggregate}]".also { nameTextView.text = it }
         }
     }
 
