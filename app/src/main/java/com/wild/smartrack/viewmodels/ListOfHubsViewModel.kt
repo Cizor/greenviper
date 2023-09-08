@@ -18,8 +18,10 @@ import com.wild.smartrack.data.Tag
 import com.wild.smartrack.data.UploadStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -86,6 +88,7 @@ class ListOfHubsViewModel @Inject constructor(
 
             }
         }
+        setupRealtimeUpdates()
     }
 
     fun selectHub(hub: Hub) {
@@ -271,6 +274,96 @@ class ListOfHubsViewModel @Inject constructor(
         }
 
         return bytes
+    }
+
+    private fun setupRealtimeUpdates() {
+        viewModelScope.launch {
+            hubUpdatesFlow().collect { updatedHub ->
+                // Update the hub list and notify observers
+                updateHubList(updatedHub)
+            }
+            controllerUpdatesFlow().collect { updatedController ->
+                // Update the controller list and notify observers
+                updateControllerList(updatedController)
+            }
+            tagUpdatesFlow().collect { updatedTag ->
+                // Update the tag list and notify observers
+                updateTagList(updatedTag)
+            }
+        }
+    }
+
+    private fun hubUpdatesFlow() = callbackFlow<Hub> {
+        val userId = auth.currentUser?.uid ?: return@callbackFlow
+        val subscription = db.collection("users")
+            .document(userId)
+            .collection("hubs")
+            .addSnapshotListener { snapshot, _ ->
+                snapshot?.documentChanges?.forEach { documentChange ->
+                    val hub = documentChange.document.toObject(Hub::class.java)
+                    trySend(hub)
+                }
+            }
+        awaitClose { subscription.remove() }
+    }
+    private fun controllerUpdatesFlow() = callbackFlow<Controller> {
+        val userId = auth.currentUser?.uid ?: return@callbackFlow
+        val subscription = db.collection("users")
+            .document(userId)
+            .collection("controllers")
+            .addSnapshotListener { snapshot, _ ->
+                snapshot?.documentChanges?.forEach { documentChange ->
+                    val controller = documentChange.document.toObject(Controller::class.java)
+                    trySend(controller)
+                }
+            }
+        awaitClose { subscription.remove() }
+    }
+    private fun tagUpdatesFlow() = callbackFlow<Tag> {
+        val userId = auth.currentUser?.uid ?: return@callbackFlow
+        val subscription = db.collection("users")
+            .document(userId)
+            .collection("tags")
+            .addSnapshotListener { snapshot, _ ->
+                snapshot?.documentChanges?.forEach { documentChange ->
+                    val tag = documentChange.document.toObject(Tag::class.java)
+                    trySend(tag)
+                }
+            }
+        awaitClose { subscription.remove() }
+    }
+
+    private fun updateHubList(updatedHub: Hub) {
+        if (updatedHub !in hubList) {
+            hubList.add(updatedHub)
+        } else {
+            val index = hubList.indexOf(updatedHub)
+            hubList[index] = updatedHub
+        }
+        // Notify observers with updated hub data
+        _hub.value = updatedHub
+    }
+
+    private fun updateControllerList(updatedController: Controller) {
+        if (updatedController !in controllerList) {
+            controllerList.add(updatedController)
+        } else {
+            val index = controllerList.indexOf(updatedController)
+            controllerList[index] = updatedController
+        }
+        // Notify observers with updated controller data
+        _controller.value = updatedController
+    }
+
+    private fun updateTagList(updatedTag: Tag) {
+        if (updatedTag !in tagList) {
+            tagList.add(updatedTag)
+        } else {
+            val index = tagList.indexOf(updatedTag)
+            tagList[index] = updatedTag
+        }
+        // Notify observers with updated tag data
+        _tag.value = updatedTag
     }
 
 
