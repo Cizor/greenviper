@@ -64,6 +64,10 @@ class ListOfHubsViewModel @Inject constructor(
 
     private val storageReference = storage.reference
 
+    var hubList = mutableListOf<Hub>()
+    var controllerList = mutableListOf<Controller>()
+    var tagList = mutableListOf<Tag>()
+
 
     init {
         viewModelScope.launch {

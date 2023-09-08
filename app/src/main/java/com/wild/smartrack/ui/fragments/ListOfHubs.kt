@@ -26,7 +26,6 @@ class ListOfHubs : Fragment() {
     private var _binding: FragmentListOfHubsBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: MyHubAdapter
-    //private val hubs = mutableListOf<Hub>()
 
 
     override fun onCreateView(
