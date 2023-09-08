@@ -32,8 +32,6 @@ class ListOfTags : Fragment() {
     private val listOfHubsViewModel: ListOfHubsViewModel by activityViewModels()
     private lateinit var adapter: MyTagAdapter
 
-    // Define a list to store the tags
-    private val tags = mutableListOf<Tag>()
 
     private var fileName: String = "_"
 
@@ -57,8 +55,10 @@ class ListOfTags : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             listOfHubsViewModel.tag.collect { newTag ->
                 if (newTag != null) {
-                    tags.add(newTag)
-                    adapter.submitList(tags.toList())
+                    if(!listOfHubsViewModel.tagList.contains(newTag)) {
+                        listOfHubsViewModel.tagList.add(newTag)
+                    }
+                    adapter.submitList(listOfHubsViewModel.tagList.toList())
                 }
             }
         }
@@ -85,66 +85,6 @@ class ListOfTags : Fragment() {
             findNavController().navigate(action)
         }
     }
-//    fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
-//        val stream = ByteArrayOutputStream()
-//        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-//        return stream.toByteArray()
-//    }
-//    fun bytesToHex(bytes: ByteArray): ByteArray {
-//        val hexArray = "0123456789ABCDEF".toCharArray()
-//        val hexChars = ByteArray(bytes.size * 2)
-//        var v: Int
-//        for (j in bytes.indices) {
-//            v = bytes[j].toInt() and 0xFF
-//            hexChars[j * 2] = hexArray[v ushr 4].toByte()
-//            hexChars[j * 2 + 1] = hexArray[v and 0x0F].toByte()
-//        }
-//        return hexChars
-//    }
-//    private fun uploadHexArrayToFirebase(hexArray: ByteArray, fileName: String) {
-//        Log.d("ListOfTags", "uploadHexArrayToFirebase: $fileName")
-//
-//        // Generate the .h file content
-//        val headerStringBuilder = StringBuilder()
-//        headerStringBuilder.append("#ifndef _GxBitmaps3c128x296_H_\n")
-//        headerStringBuilder.append("#define _GxBitmaps3c128x296_H_\n")
-//        headerStringBuilder.append("\n")
-//        headerStringBuilder.append("#if defined(ESP8266) || defined(ESP32)\n")
-//        headerStringBuilder.append("#include <pgmspace.h>\n")
-//        headerStringBuilder.append("#else\n")
-//        headerStringBuilder.append("#include <avr/pgmspace.h>\n")
-//        headerStringBuilder.append("#endif\n")
-//        headerStringBuilder.append("\n")
-//        headerStringBuilder.append("#include \"WS_Bitmaps3c128x296.h\"\n")
-//        headerStringBuilder.append("\n")
-//        headerStringBuilder.append("const unsigned char Bitmap3c128x296_1_black[] PROGMEM =\n")
-//        headerStringBuilder.append("{\n")
-//
-//        hexArray.forEachIndexed { index, byte ->
-//            headerStringBuilder.append("0X${"%02X".format(byte)},")
-//            if (index % 16 == 15) {
-//                headerStringBuilder.append("\n")
-//            }
-//        }
-//
-//        headerStringBuilder.append("};\n")
-//        headerStringBuilder.append("#endif\n")
-//
-//        // Convert the string to a byte array
-//        val headerFileContent = headerStringBuilder.toString().toByteArray()
-//
-//        // Upload the byte array to Firebase
-//        val storageRef = Firebase.storage.reference.child("test/$fileName.h")
-//
-//        storageRef.putBytes(headerFileContent)
-//            .addOnSuccessListener {
-//                Toast.makeText(requireContext(), "Upload successful", Toast.LENGTH_LONG).show()
-//            }
-//            .addOnFailureListener {
-//                Toast.makeText(requireContext(), "Upload failed: ${it.message}", Toast.LENGTH_LONG).show()
-//            }
-//    }
-
 
     class MyTagAdapter(private val onTagClick: (Tag) -> Unit) : androidx.recyclerview.widget.RecyclerView.Adapter<MyTagViewHolder>() {
         private var tags: List<Tag> = emptyList() // Replace Tag with your actual Tag data class

@@ -26,7 +26,7 @@ class ListOfControllers : Fragment() {
     private val listOfHubsViewModel: ListOfHubsViewModel by activityViewModels()
     private lateinit var adapter: MyControllerAdapter
 
-    private val controllers = mutableListOf<Controller>()
+    //private val controllers = mutableListOf<Controller>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,10 +51,11 @@ class ListOfControllers : Fragment() {
         // Observe the controllers StateFlow
         viewLifecycleOwner.lifecycleScope.launch {
             listOfHubsViewModel.controller.collect { controller ->
-                Log.d("ListOfControllers", "Controllers: $controllers")
                 if (controller != null) {
-                    controllers.add(controller)
-                    adapter.submitList(controllers.toList())  // or however you update your list
+                    if (!listOfHubsViewModel.controllerList.contains(controller)) {
+                        listOfHubsViewModel.controllerList.add(controller)
+                    }
+                    adapter.submitList(listOfHubsViewModel.controllerList.toList())
                 }
             }
         }

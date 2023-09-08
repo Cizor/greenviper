@@ -1,6 +1,7 @@
 package com.wild.smartrack.ui.fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,7 +26,8 @@ class ListOfHubs : Fragment() {
     private var _binding: FragmentListOfHubsBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: MyHubAdapter
-    private val hubs = mutableListOf<Hub>()
+    //private val hubs = mutableListOf<Hub>()
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,9 +53,10 @@ class ListOfHubs : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             listOfHubsViewModel.hub.collect { hub ->
                 if (hub != null) {
-                    // Assuming `tags` is the current list of tags in the Fragment
-                    hubs.add(hub)
-                    adapter.submitList(hubs.toList()) // or however you update your list
+                    if(!listOfHubsViewModel.hubList.contains(hub)) {
+                        listOfHubsViewModel.hubList.add(hub)
+                    }
+                    adapter.submitList(listOfHubsViewModel.hubList.toList())
                 }
             }
         }

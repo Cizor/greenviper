@@ -40,6 +40,10 @@ class ListOfHubsViewModel @Inject constructor(
     private val _selectedHub = MutableStateFlow<Hub?>(null)
     val selectedHub: StateFlow<Hub?> = _selectedHub
 
+    var hubList = mutableListOf<Hub>()
+    var controllerList = mutableListOf<Controller>()
+    var tagList = mutableListOf<Tag>()
+
     private val _controller = MutableStateFlow<Controller?>(null)
     val controller: StateFlow<Controller?> = _controller
 
@@ -68,6 +72,7 @@ class ListOfHubsViewModel @Inject constructor(
             fetchData()
             selectedHub.collect { hub ->
                 if (hub != null) {
+                    Log.d("ListOfHubsViewModel", "selectedHub: $hub")
                     fetchControllers(hub)
                 }
             }
@@ -100,6 +105,7 @@ class ListOfHubsViewModel @Inject constructor(
             .get()
             .addOnSuccessListener { document ->
                 val hubReferences = document.get("hubs") as List<DocumentReference>? ?: return@addOnSuccessListener
+                Log.d("ListOfHubsViewModel", "fetchData: $hubReferences")
                 fetchHubs(hubReferences)
             }
     }
@@ -165,7 +171,7 @@ class ListOfHubsViewModel @Inject constructor(
     }
 
     fun convertAndScaleImage(bitmap: Bitmap) {
-        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 296, 128, false)
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 128, 296, false)
         val bwBitmap = convertToBlackAndWhite(scaledBitmap)
         _selectedImage.value = bwBitmap
     }
@@ -224,6 +230,7 @@ class ListOfHubsViewModel @Inject constructor(
             }
         }
     }
+
 
 
 }

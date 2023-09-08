@@ -71,7 +71,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.2.3"))
     implementation("com.google.firebase:firebase-auth:22.1.1")
     implementation("com.google.firebase:firebase-storage-ktx")
-    implementation("com.google.firebase:firebase-functions:23.0.3")
+    implementation("com.google.firebase:firebase-functions")
 
     //firebase ui
     implementation("com.firebaseui:firebase-ui-firestore:8.0.2")
