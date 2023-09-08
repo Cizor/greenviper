@@ -70,7 +70,6 @@ class ListOfTags : Fragment() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "image/*"
         fileName = "${currentHub}_${currentController}_${tag.name}"
-        Log.d("ListOfTags", "onTagClicked: $fileName")
         startActivityForResult(intent, REQUEST_CODE, null)
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

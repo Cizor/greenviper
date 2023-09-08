@@ -29,6 +29,7 @@ class ConfirmImage : Fragment() {
     ): View {
         _binding = FragmentConfirmImageBinding.inflate(inflater, container, false)
         _binding!!.viewModel = listOfHubsViewModel
+        listOfHubsViewModel.uploadStatus.value = UploadStatus.NONE
         return binding.root
     }
 
