@@ -32,6 +32,7 @@ class ListOfHubs : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentListOfHubsBinding.inflate(inflater, container, false)
+
         return binding.root
     }
 
@@ -46,7 +47,6 @@ class ListOfHubs : Fragment() {
         }
         binding.hubsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.hubsRecyclerView.adapter = adapter
-
         // Observe the hubs StateFlow
         viewLifecycleOwner.lifecycleScope.launch {
             listOfHubsViewModel.hub.collect { hub ->
@@ -57,6 +57,7 @@ class ListOfHubs : Fragment() {
                 }
             }
         }
+
     }
     class MyHubAdapter(private val onHubClick: (Hub) -> Unit) : RecyclerView.Adapter<MyHubViewHolder>() {
         private var hubs: List<Hub> = emptyList()
